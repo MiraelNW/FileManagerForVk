@@ -11,6 +11,6 @@ interface FileListDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertFile(file: FileDbModel)
 
-    @Query("SELECT * from FileList")
-    suspend fun getFileListFromDb():List<FileDbModel>
+    @Query("SELECT * from FileList WHERE absolutePath=:path")
+    suspend fun getFileFromDb(path: String): FileDbModel?
 }

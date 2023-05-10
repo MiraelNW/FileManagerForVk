@@ -3,6 +3,7 @@ package com.miraeldev.filemanagerforvk.di
 import android.app.Application
 import com.miraeldev.filemanagerforvk.presentation.ui.filesList.FilesListFragment
 import com.miraeldev.filemanagerforvk.presentation.ui.MainActivity
+import com.miraeldev.filemanagerforvk.presentation.ui.changedFilesList.ChangedFilesListFragment
 import dagger.BindsInstance
 import dagger.Component
 
@@ -10,6 +11,7 @@ import dagger.Component
 interface ApplicationComponent {
 
     fun inject(fragment: FilesListFragment)
+    fun inject(fragment: ChangedFilesListFragment)
 
     fun inject(activity:MainActivity)
 

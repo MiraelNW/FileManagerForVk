@@ -1,5 +1,6 @@
 package com.miraeldev.filemanagerforvk.presentation.fileListAdapter
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.View.OnLongClickListener
@@ -26,7 +27,6 @@ class FilesListAdapter : ListAdapter<FileModel, FileViewHolder>(FileListDiffCall
     override fun onBindViewHolder(holder: FileViewHolder, position: Int) {
         val file = getItem(position)
         with(holder.binding) {
-
             if (file.isDirectory) {
                 fileImage.setImageResource(R.drawable.ic_folder)
             } else {
@@ -59,7 +59,7 @@ class FilesListAdapter : ListAdapter<FileModel, FileViewHolder>(FileListDiffCall
         holder.itemView.setOnLongClickListener {
             if (!file.isDirectory) {
 
-                onShareFileClickListener?.onShareFileClick(file.absolutePath,it)
+                onShareFileClickListener?.onShareFileClick(file.absolutePath, it)
             }
             true
         }
@@ -83,6 +83,6 @@ class FilesListAdapter : ListAdapter<FileModel, FileViewHolder>(FileListDiffCall
     }
 
     interface OnShareFileClickListener {
-        fun onShareFileClick(path: String,view:View)
+        fun onShareFileClick(path: String, view: View)
     }
 }

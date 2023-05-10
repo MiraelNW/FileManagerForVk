@@ -2,7 +2,7 @@ package com.miraeldev.filemanagerforvk.di
 
 import androidx.lifecycle.ViewModel
 import com.miraeldev.filemanagerforvk.presentation.ui.filesList.FileListViewModel
-import com.miraeldev.filemanagerforvk.presentation.ui.MainViewModel
+import com.miraeldev.filemanagerforvk.presentation.ui.changedFilesList.ChangedFilesListViewModel
 import dagger.Binds
 import dagger.Module
 import dagger.multibindings.IntoMap
@@ -17,6 +17,6 @@ interface ViewModelModule {
 
     @IntoMap
     @Binds
-    @ViewModelKey(MainViewModel::class)
-    fun bindMainViewModel(viewModel: MainViewModel): ViewModel
+    @ViewModelKey(ChangedFilesListViewModel::class)
+    fun bindMainViewModel(viewModel: ChangedFilesListViewModel): ViewModel
 }

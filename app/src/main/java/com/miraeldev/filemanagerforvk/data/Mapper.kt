@@ -9,7 +9,11 @@ import java.nio.file.attribute.BasicFileAttributes
 import javax.inject.Inject
 
 class Mapper @Inject constructor() {
-    fun mapFileToFileModel(file: File, fileSize: Long = file.length()): FileModel {
+    fun mapFileToFileModel(
+        file: File,
+        fileSize: Long = file.length(),
+        hashcode: String = file.hashCode().toString()
+    ): FileModel {
         return FileModel(
             absolutePath = file.absolutePath,
             name = file.name,
@@ -18,19 +22,7 @@ class Mapper @Inject constructor() {
             dateInMillis = file.getLastModifiedTimeInMillis(),
             isDirectory = file.isDirectory,
             type = if (!file.isDirectory) getType(file.absolutePath) else "directory",
-            hashcode = file.hashCode().toString()
-        )
-    }
-
-    fun mapFileToFileDbModel(file: File, fileSize: Long = file.length()): FileDbModel {
-        return FileDbModel(
-            absolutePath = file.absolutePath,
-            name = file.name,
-            size = fileSize,
-            dateInMillis = file.getLastModifiedTimeInMillis(),
-            isDirectory = file.isDirectory,
-            type = if (!file.isDirectory) getType(file.absolutePath) else "directory",
-            hashcode = file.hashCode().toString()
+            hashcode = hashcode
         )
     }
 
@@ -110,6 +102,5 @@ class Mapper @Inject constructor() {
             }
         }
     }
-
 
 }

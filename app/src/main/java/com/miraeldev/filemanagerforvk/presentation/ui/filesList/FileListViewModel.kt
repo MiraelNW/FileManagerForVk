@@ -1,12 +1,11 @@
 package com.miraeldev.filemanagerforvk.presentation.ui.filesList
 
 import android.os.Environment
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.miraeldev.filemanagerforvk.domain.usecases.GetFileListFromDbUseCase
+import com.miraeldev.filemanagerforvk.domain.model.FileModel
 import com.miraeldev.filemanagerforvk.domain.usecases.GetFilesListUseCase
 import com.miraeldev.filemanagerforvk.domain.usecases.SaveAllFilesInDbUseCase
 import kotlinx.coroutines.*
@@ -15,11 +14,11 @@ import javax.inject.Inject
 class FileListViewModel @Inject constructor(
     private val saveAllFilesInDb: SaveAllFilesInDbUseCase,
     private val getFilesListUseCase: GetFilesListUseCase,
-    private val getFileListFromDbUseCase: GetFileListFromDbUseCase
 ) : ViewModel() {
 
     private val _screenState = MutableLiveData<ScreenState>()
     val screenState: LiveData<ScreenState> get() = _screenState
+    private var changedFilesList:List<FileModel>? = null
 
     private val scope = CoroutineScope(Dispatchers.IO)
 
@@ -38,9 +37,6 @@ class FileListViewModel @Inject constructor(
             val list = deferredList.await()
             _screenState.value = FileList(list)
         }
-        viewModelScope.launch {
-            getFileListFromDbUseCase()
-        }
     }
 
     fun sortList(sortBy: Int) {
@@ -58,7 +54,6 @@ class FileListViewModel @Inject constructor(
             else -> _screenState.value = FileList(list.listOfFileModels.sortedBy { it.name })
         }
     }
-
 
 
 }

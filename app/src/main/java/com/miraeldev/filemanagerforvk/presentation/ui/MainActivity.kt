@@ -28,15 +28,10 @@ class MainActivity : AppCompatActivity() {
         (application as FileManagerForVkApp).component
     }
 
-    @Inject
-    lateinit var viewModelFactory: ViewModelFactory
-    private lateinit var viewModel: MainViewModel
-
     override fun onCreate(savedInstanceState: Bundle?) {
         component.inject(this)
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
-        viewModel = ViewModelProvider(this, viewModelFactory)[MainViewModel::class.java]
         if (!PermissionUtils.hasPermissions(this@MainActivity)) {
             PermissionUtils.requestPermissions(this@MainActivity, PERMISSION_STORAGE)
         }
@@ -47,13 +42,9 @@ class MainActivity : AppCompatActivity() {
                 .addToBackStack(null)
                 .commit()
         } else {
-            makeToast("Разрешение не предоставлено")
+            makeToast(DENIED)
             finish()
         }
-    }
-
-    private fun Activity.makeToast(text: String) {
-        Toast.makeText(this, text, Toast.LENGTH_SHORT).show()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -66,7 +57,7 @@ class MainActivity : AppCompatActivity() {
                         .addToBackStack(null)
                         .commit()
                 } else {
-                    makeToast("Разрешение не предоставлено")
+                    makeToast(DENIED)
                 }
             }
         }
@@ -85,13 +76,18 @@ class MainActivity : AppCompatActivity() {
                     .addToBackStack(null)
                     .commit()
             } else {
-                makeToast("Разрешение не предоставлено")
+                makeToast(DENIED)
             }
         }
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
 
+    private fun Activity.makeToast(text: String) {
+        Toast.makeText(this, text, Toast.LENGTH_SHORT).show()
+    }
+
     companion object {
         private const val PERMISSION_STORAGE = 101
+        private const val DENIED = "Разрешение не предоставлено"
     }
 }

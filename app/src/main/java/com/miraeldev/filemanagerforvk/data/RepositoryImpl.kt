@@ -1,6 +1,7 @@
 package com.miraeldev.filemanagerforvk.data
 
-import android.provider.MediaStore
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import com.miraeldev.filemanagerforvk.data.database.FileListDao
 import com.miraeldev.filemanagerforvk.domain.Repository
 import com.miraeldev.filemanagerforvk.domain.model.FileModel
@@ -9,9 +10,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.File
-import java.io.FileInputStream
-import java.io.IOException
-import java.nio.file.Files
 import java.security.MessageDigest
 import javax.inject.Inject
 
@@ -21,9 +19,11 @@ class RepositoryImpl @Inject constructor(
     private val mapper: Mapper
 ) : Repository {
 
+    private val scopeForCalculating = CoroutineScope(Dispatchers.Default)
     private val scope = CoroutineScope(Dispatchers.IO)
 
-    private val scopeForCalculating = CoroutineScope(Dispatchers.Default)
+    private val _changedFiles = MutableLiveData<List<FileModel>>()
+    private val changedFiles: LiveData<List<FileModel>> get() = _changedFiles
 
     override suspend fun getFilesList(path: String): List<FileModel> {
         val file = File(path)
@@ -48,26 +48,30 @@ class RepositoryImpl @Inject constructor(
         return fileModelsList.sortedBy { it.name }
     }
 
-    override suspend fun getFileListFromDb(): List<FileModel> {
-        val listOfFiles = mutableListOf<FileModel>()
-        fileListDao.getFileListFromDb().forEach {
-            listOfFiles.add(mapper.mapFileDbModelToFileModel(it))
-        }
-        return listOfFiles
-    }
-
     override suspend fun saveAllFilesInDb(path: String) {
         val file = File(path)
         val fullFileList = listFilesWithSubFolders(file)
+        val result = mutableListOf<FileModel>()
         fullFileList.forEach { file ->
-            val fileModel = mapper.mapFileToFileModel(file)
-            fileListDao.insertFile(
-                mapper.mapFileModelToFileDbModel(
-                    fileModel,
-                    calculateHashCode(file)
-                )
+            val fileModel = mapper.mapFileModelToFileDbModel(
+                mapper.mapFileToFileModel(file),
+                calculateHashCode(file)
             )
+            val fileFromDb = fileListDao.getFileFromDb(fileModel.absolutePath)
+
+            if (fileFromDb != null && fileFromDb.hashcode != fileModel.hashcode) {
+                result.add(mapper.mapFileDbModelToFileModel(fileModel))
+            }
+            scope.launch {
+                fileListDao.insertFile(fileModel)
+            }
         }
+        _changedFiles.value = result
+
+    }
+
+    override fun getChangedFileList():LiveData<List<FileModel>> {
+        return changedFiles
     }
 
     private fun calculateHashCode(file: File): String {

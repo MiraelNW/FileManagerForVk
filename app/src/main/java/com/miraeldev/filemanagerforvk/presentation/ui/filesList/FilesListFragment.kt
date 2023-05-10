@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.os.Environment
-import android.util.Log
 import android.view.*
 import android.widget.PopupMenu
 import androidx.core.content.FileProvider
@@ -14,6 +13,7 @@ import com.miraeldev.filemanagerforvk.FileManagerForVkApp
 import com.miraeldev.filemanagerforvk.R
 import com.miraeldev.filemanagerforvk.databinding.FilesListFragmentBinding
 import com.miraeldev.filemanagerforvk.presentation.fileListAdapter.FilesListAdapter
+import com.miraeldev.filemanagerforvk.presentation.ui.changedFilesList.ChangedFilesListFragment
 import com.miraeldev.filemanagerforvk.utils.FileOpener
 import com.miraeldev.filemanagerforvk.utils.ViewModelFactory
 import java.io.File
@@ -53,12 +53,15 @@ class FilesListFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        viewModel = ViewModelProvider(this, viewModelFactory)[FileListViewModel::class.java]
         setHasOptionsMenu(true)
+
+        viewModel = ViewModelProvider(this, viewModelFactory)[FileListViewModel::class.java]
 
         adapter = FilesListAdapter()
         binding.filesRv.adapter = adapter
+
         path = requireArguments().getString(PATH) ?: Environment.getExternalStorageDirectory().path
+
         observeViewModel()
         viewModel.getList(path)
     }
@@ -71,7 +74,6 @@ class FilesListFragment : Fragment() {
                     adapter.submitList(screenState.listOfFileModels)
                 }
                 Loading -> {
-                    Log.d("list", "visible")
                     binding.progressBar.visibility = View.VISIBLE
                 }
             }
@@ -94,13 +96,12 @@ class FilesListFragment : Fragment() {
             adapter.onShareFileClickListener = object : FilesListAdapter.OnShareFileClickListener {
                 override fun onShareFileClick(path: String, view: View) {
                     val popupMenu = PopupMenu(requireContext(), view)
-                    popupMenu.menu.add("Share")
+                    popupMenu.menu.add(SHARE)
                     popupMenu.setOnMenuItemClickListener {
-                        Log.d("list", "click")
                         val file = File(path)
                         val uri = FileProvider.getUriForFile(
                             requireContext(),
-                            requireContext().applicationContext.packageName + ".provider",
+                            requireContext().applicationContext.packageName + PROVIDER,
                             file
                         )
                         val intent = Intent(Intent.ACTION_SEND)
@@ -119,85 +120,77 @@ class FilesListFragment : Fragment() {
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         super.onCreateOptionsMenu(menu, inflater)
-        val subMenuFileAscending = menu.addSubMenu("Отсоритировать по возрастанию")
+        menu.add(CHANGES_FILES)
+        val subMenuFileAscending = menu.addSubMenu(SORT_ASCENDING)
         subMenuFileAscending.add(
             Menu.NONE,
             SORT_ASCENDING_FILE_SIZE,
             Menu.NONE,
-            "По размеру файла"
+            BY_FILE_SIZE
         )
         subMenuFileAscending.add(
             Menu.NONE,
             SORT_ASCENDING_FILE_CREATION_DATE,
             Menu.NONE,
-            "По дате создания"
+            BY_FILE_CREATION_DATE
         )
         subMenuFileAscending.add(
             Menu.NONE,
             SORT_ASCENDING_FILE_MIME_TYPE,
             Menu.NONE,
-            "По расширению"
+            BY_FILE_MIME_TYPE
         )
         subMenuFileAscending.add(
             Menu.NONE,
             SORT_ASCENDING_FILE_NAME,
             Menu.NONE,
-            "По имени файла"
+            BY_FILE_NAME
         )
-        val subMenuFileDescending = menu.addSubMenu("Отсоритировать по убыванию")
+        val subMenuFileDescending = menu.addSubMenu(SORT_DESCENDING)
         subMenuFileDescending.add(
             Menu.NONE,
             SORT_DESCENDING_FILE_SIZE,
             Menu.NONE,
-            "По размеру файла"
+            BY_FILE_SIZE
         )
         subMenuFileDescending.add(
             Menu.NONE,
             SORT_DESCENDING_FILE_CREATION_DATE,
             Menu.NONE,
-            "По дате создания"
+            BY_FILE_CREATION_DATE
         )
         subMenuFileDescending.add(
             Menu.NONE,
             SORT_DESCENDING_FILE_MIME_TYPE,
             Menu.NONE,
-            "По расширению"
+            BY_FILE_MIME_TYPE
         )
         subMenuFileDescending.add(
             Menu.NONE,
             SORT_DESCENDING_FILE_NAME,
             Menu.NONE,
-            "По имени файла"
+            BY_FILE_NAME
         )
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
-            SORT_ASCENDING_FILE_SIZE -> {
-                viewModel.sortList(1)
-            }
-            SORT_ASCENDING_FILE_CREATION_DATE -> {
-                viewModel.sortList(2)
-            }
-            SORT_ASCENDING_FILE_MIME_TYPE -> {
-                viewModel.sortList(3)
-            }
-            SORT_ASCENDING_FILE_NAME -> {
-                viewModel.sortList(4)
-            }
-            SORT_DESCENDING_FILE_SIZE -> {
-                viewModel.sortList(5)
-            }
-            SORT_DESCENDING_FILE_CREATION_DATE -> {
-                viewModel.sortList(6)
-            }
-            SORT_DESCENDING_FILE_MIME_TYPE -> {
-                viewModel.sortList(7)
-            }
-            SORT_DESCENDING_FILE_NAME -> {
-                viewModel.sortList(8)
-            }
+        if (item.title?.equals(CHANGES_FILES) == true) {
+            requireActivity().supportFragmentManager.beginTransaction()
+                .replace(R.id.main_fragment_container, ChangedFilesListFragment.newInstance())
+                .addToBackStack(null)
+                .commit()
         }
+        val sortType = when (item.itemId) {
+            SORT_ASCENDING_FILE_SIZE -> 1
+            SORT_ASCENDING_FILE_CREATION_DATE -> 2
+            SORT_ASCENDING_FILE_MIME_TYPE -> 3
+            SORT_ASCENDING_FILE_NAME -> 4
+            SORT_DESCENDING_FILE_SIZE -> 5
+            SORT_DESCENDING_FILE_CREATION_DATE -> 6
+            SORT_DESCENDING_FILE_MIME_TYPE -> 7
+            else -> 8
+        }
+        viewModel.sortList(sortType)
         return super.onOptionsItemSelected(item)
     }
 
@@ -210,6 +203,15 @@ class FilesListFragment : Fragment() {
         private const val SORT_DESCENDING_FILE_CREATION_DATE = 302
         private const val SORT_DESCENDING_FILE_MIME_TYPE = 303
         private const val SORT_DESCENDING_FILE_NAME = 304
+        private const val SORT_DESCENDING = "Отсортировать по убыванию"
+        private const val SORT_ASCENDING = "Отсортировать по возрастанию"
+        private const val CHANGES_FILES = "Измененные файлы"
+        private const val BY_FILE_SIZE = "По размеру файла"
+        private const val BY_FILE_CREATION_DATE = "По дате создания файла"
+        private const val BY_FILE_MIME_TYPE = "По расширению файла"
+        private const val BY_FILE_NAME = "По имени файла"
+        private const val SHARE = "Share"
+        private const val PROVIDER = ".provider"
         const val PATH = "path"
 
         fun newInstance(path: String): FilesListFragment {
