@@ -41,19 +41,20 @@ class MainActivity : AppCompatActivity() {
                 .replace(R.id.main_fragment_container, FilesListFragment.newInstance(path))
                 .addToBackStack(null)
                 .commit()
-        } else {
-            makeToast(DENIED)
-            finish()
         }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == PERMISSION_STORAGE) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 if (PermissionUtils.hasPermissions(this)) {
                     val path = Environment.getExternalStorageDirectory().path
                     supportFragmentManager.beginTransaction()
-                        .replace(R.id.main_fragment_container, FilesListFragment.newInstance(path))
+                        .replace(
+                            R.id.main_fragment_container,
+                            FilesListFragment.newInstance(path)
+                        )
                         .addToBackStack(null)
                         .commit()
                 } else {
@@ -61,7 +62,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
-        super.onActivityResult(requestCode, resultCode, data)
+
     }
 
     override fun onRequestPermissionsResult(

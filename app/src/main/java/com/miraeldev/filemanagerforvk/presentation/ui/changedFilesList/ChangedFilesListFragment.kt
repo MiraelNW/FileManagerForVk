@@ -64,12 +64,16 @@ class ChangedFilesListFragment : Fragment() {
     }
 
     private fun observeViewModel() {
-
-        viewModel.changedFilesListUseCase.invoke().observe(viewLifecycleOwner){
+        binding.progressBar.visibility = View.VISIBLE
+        binding.alert.visibility = View.VISIBLE
+        viewModel.changedFilesListUseCase.invoke().observe(viewLifecycleOwner) {
+            binding.alert.visibility = View.GONE
+            binding.progressBar.visibility = View.GONE
+            Log.d("main", it.toString())
             if (it == null || it.isEmpty()) {
                 binding.filesRv.visibility = View.GONE
                 binding.noFiles.visibility = View.VISIBLE
-            } else{
+            } else {
                 binding.noFiles.visibility = View.GONE
                 binding.filesRv.visibility = View.VISIBLE
                 adapter.submitList(it)
