@@ -1,14 +1,19 @@
-package com.miraeldev.filemanagerforvk.presentation.ui
+package com.miraeldev.filemanagerforvk.presentation.ui.filesList
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
+import android.os.Environment
+import android.util.Log
 import android.view.*
+import android.widget.PopupMenu
+import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import com.miraeldev.filemanagerforvk.FileManagerForVkApp
 import com.miraeldev.filemanagerforvk.R
 import com.miraeldev.filemanagerforvk.databinding.FilesListFragmentBinding
 import com.miraeldev.filemanagerforvk.presentation.fileListAdapter.FilesListAdapter
-import com.miraeldev.filemanagerforvk.FileManagerForVkApp
 import com.miraeldev.filemanagerforvk.utils.FileOpener
 import com.miraeldev.filemanagerforvk.utils.ViewModelFactory
 import java.io.File
@@ -53,10 +58,24 @@ class FilesListFragment : Fragment() {
 
         adapter = FilesListAdapter()
         binding.filesRv.adapter = adapter
-        path = requireArguments().getString(PATH) ?: ""
+        path = requireArguments().getString(PATH) ?: Environment.getExternalStorageDirectory().path
+        observeViewModel()
         viewModel.getList(path)
-        viewModel.fileListLD.observe(viewLifecycleOwner) {
-            adapter.submitList(it)
+    }
+
+    private fun observeViewModel() {
+        viewModel.screenState.observe(viewLifecycleOwner) { screenState ->
+            when (screenState) {
+                is FileList -> {
+                    binding.progressBar.visibility = View.GONE
+                    adapter.submitList(screenState.listOfFileModels)
+                }
+                Loading -> {
+                    Log.d("list", "visible")
+                    binding.progressBar.visibility = View.VISIBLE
+                }
+            }
+
 
             adapter.onDirectoryClickListener = object : FilesListAdapter.OnDirectoryClickListener {
                 override fun onDirectoryClick(path: String) {
@@ -71,58 +90,80 @@ class FilesListFragment : Fragment() {
                     val file = File(path)
                     FileOpener.openFile(requireContext(), file)
                 }
-
+            }
+            adapter.onShareFileClickListener = object : FilesListAdapter.OnShareFileClickListener {
+                override fun onShareFileClick(path: String, view: View) {
+                    val popupMenu = PopupMenu(requireContext(), view)
+                    popupMenu.menu.add("Share")
+                    popupMenu.setOnMenuItemClickListener {
+                        Log.d("list", "click")
+                        val file = File(path)
+                        val uri = FileProvider.getUriForFile(
+                            requireContext(),
+                            requireContext().applicationContext.packageName + ".provider",
+                            file
+                        )
+                        val intent = Intent(Intent.ACTION_SEND)
+                        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        intent.type = "*/*"
+                        intent.putExtra(Intent.EXTRA_STREAM, uri)
+                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                        requireActivity().startActivity(intent)
+                        true
+                    }
+                    popupMenu.show()
+                }
             }
         }
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         super.onCreateOptionsMenu(menu, inflater)
-        val subMenuFile = menu.addSubMenu("Отсоритировать по возрастанию")
-        subMenuFile.add(
+        val subMenuFileAscending = menu.addSubMenu("Отсоритировать по возрастанию")
+        subMenuFileAscending.add(
             Menu.NONE,
             SORT_ASCENDING_FILE_SIZE,
             Menu.NONE,
             "По размеру файла"
         )
-        subMenuFile.add(
+        subMenuFileAscending.add(
             Menu.NONE,
             SORT_ASCENDING_FILE_CREATION_DATE,
             Menu.NONE,
             "По дате создания"
         )
-        subMenuFile.add(
+        subMenuFileAscending.add(
             Menu.NONE,
             SORT_ASCENDING_FILE_MIME_TYPE,
             Menu.NONE,
             "По расширению"
         )
-        subMenuFile.add(
+        subMenuFileAscending.add(
             Menu.NONE,
             SORT_ASCENDING_FILE_NAME,
             Menu.NONE,
             "По имени файла"
         )
-        val subMenuEdit = menu.addSubMenu("Отсоритировать по убыванию")
-        subMenuEdit.add(
+        val subMenuFileDescending = menu.addSubMenu("Отсоритировать по убыванию")
+        subMenuFileDescending.add(
             Menu.NONE,
             SORT_DESCENDING_FILE_SIZE,
             Menu.NONE,
             "По размеру файла"
         )
-        subMenuEdit.add(
+        subMenuFileDescending.add(
             Menu.NONE,
             SORT_DESCENDING_FILE_CREATION_DATE,
             Menu.NONE,
             "По дате создания"
         )
-        subMenuEdit.add(
+        subMenuFileDescending.add(
             Menu.NONE,
             SORT_DESCENDING_FILE_MIME_TYPE,
             Menu.NONE,
             "По расширению"
         )
-        subMenuFile.add(
+        subMenuFileDescending.add(
             Menu.NONE,
             SORT_DESCENDING_FILE_NAME,
             Menu.NONE,

@@ -1,7 +1,7 @@
 package com.miraeldev.filemanagerforvk.di
 
 import androidx.lifecycle.ViewModel
-import com.miraeldev.filemanagerforvk.presentation.ui.FileListViewModel
+import com.miraeldev.filemanagerforvk.presentation.ui.filesList.FileListViewModel
 import com.miraeldev.filemanagerforvk.presentation.ui.MainViewModel
 import dagger.Binds
 import dagger.Module

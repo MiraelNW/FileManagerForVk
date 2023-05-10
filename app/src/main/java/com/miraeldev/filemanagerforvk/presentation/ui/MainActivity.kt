@@ -9,13 +9,12 @@ import android.os.Environment
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.lifecycleScope
 import com.miraeldev.filemanagerforvk.FileManagerForVkApp
 import com.miraeldev.filemanagerforvk.utils.PermissionUtils
 import com.miraeldev.filemanagerforvk.R
 import com.miraeldev.filemanagerforvk.databinding.ActivityMainBinding
+import com.miraeldev.filemanagerforvk.presentation.ui.filesList.FilesListFragment
 import com.miraeldev.filemanagerforvk.utils.ViewModelFactory
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 

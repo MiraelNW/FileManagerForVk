@@ -1,6 +1,8 @@
 package com.miraeldev.filemanagerforvk.presentation.fileListAdapter
 
 import android.view.LayoutInflater
+import android.view.View
+import android.view.View.OnLongClickListener
 import android.view.ViewGroup
 import androidx.recyclerview.widget.ListAdapter
 import com.miraeldev.filemanagerforvk.R
@@ -14,6 +16,7 @@ class FilesListAdapter : ListAdapter<FileModel, FileViewHolder>(FileListDiffCall
 
     var onDirectoryClickListener: OnDirectoryClickListener? = null
     var onFileClickListener: OnFileClickListener? = null
+    var onShareFileClickListener: OnShareFileClickListener? = null
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FileViewHolder {
         val binding = FileItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
@@ -23,6 +26,7 @@ class FilesListAdapter : ListAdapter<FileModel, FileViewHolder>(FileListDiffCall
     override fun onBindViewHolder(holder: FileViewHolder, position: Int) {
         val file = getItem(position)
         with(holder.binding) {
+
             if (file.isDirectory) {
                 fileImage.setImageResource(R.drawable.ic_folder)
             } else {
@@ -40,28 +44,27 @@ class FilesListAdapter : ListAdapter<FileModel, FileViewHolder>(FileListDiffCall
                 }
             }
             fileName.text = file.name
-            fileSize.text = buildString {
-                append("File size: ")
-                if (file.size > 999) {
-                    append(file.size / 1000)
-                    append(" Mb")
-                } else {
-                    append(file.size)
-                    append(" Kb")
-                }
+            fileSize.text = file.formatSize
 
-            }
             fileCreationDate.text = millisToDate(file.dateInMillis)
 
         }
         holder.itemView.setOnClickListener {
-            if(file.isDirectory){
+            if (file.isDirectory) {
                 onDirectoryClickListener?.onDirectoryClick(file.absolutePath)
-            }else{
+            } else {
                 onFileClickListener?.onFileClick(file.absolutePath)
             }
         }
+        holder.itemView.setOnLongClickListener {
+            if (!file.isDirectory) {
+
+                onShareFileClickListener?.onShareFileClick(file.absolutePath,it)
+            }
+            true
+        }
     }
+
 
     private fun millisToDate(timeInMillis: Long): String {
         val format = SimpleDateFormat("dd.MM.yyyy")
@@ -74,7 +77,12 @@ class FilesListAdapter : ListAdapter<FileModel, FileViewHolder>(FileListDiffCall
     interface OnDirectoryClickListener {
         fun onDirectoryClick(path: String)
     }
+
     interface OnFileClickListener {
         fun onFileClick(path: String)
+    }
+
+    interface OnShareFileClickListener {
+        fun onShareFileClick(path: String,view:View)
     }
 }

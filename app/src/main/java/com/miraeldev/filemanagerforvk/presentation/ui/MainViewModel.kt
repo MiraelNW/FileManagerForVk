@@ -12,10 +12,4 @@ class MainViewModel @Inject constructor(
     private val saveAllFilesInDb: SaveAllFilesInDbUseCase
 ) : ViewModel() {
 
-    init {
-
-//        viewModelScope.launch {
-//            saveAllFilesInDb(Environment.getExternalStorageDirectory().path)
-//        }
-    }
 }

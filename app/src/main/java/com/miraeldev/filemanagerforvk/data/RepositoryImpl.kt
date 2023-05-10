@@ -1,13 +1,18 @@
 package com.miraeldev.filemanagerforvk.data
 
-import android.util.Log
+import android.provider.MediaStore
 import com.miraeldev.filemanagerforvk.data.database.FileListDao
 import com.miraeldev.filemanagerforvk.domain.Repository
 import com.miraeldev.filemanagerforvk.domain.model.FileModel
+import com.miraeldev.filemanagerforvk.utils.HashUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.File
+import java.io.FileInputStream
+import java.io.IOException
+import java.nio.file.Files
+import java.security.MessageDigest
 import javax.inject.Inject
 
 
@@ -18,27 +23,28 @@ class RepositoryImpl @Inject constructor(
 
     private val scope = CoroutineScope(Dispatchers.IO)
 
-    private var currPath : String? = null
+    private val scopeForCalculating = CoroutineScope(Dispatchers.Default)
 
-    override fun getFilesList(path: String): List<FileModel> {
-        if (currPath == null) emptyList<FileModel>()
-        currPath = path
+    override suspend fun getFilesList(path: String): List<FileModel> {
         val file = File(path)
-        listFilesWithSubFolders(file)
+        scopeForCalculating.launch {
+            listFilesWithSubFolders(file)
+        }
         val fileModelsList = mutableListOf<FileModel>()
         file.listFiles()?.let { list ->
             list.forEach { file ->
-                fileModelsList.add(mapper.mapFileToFileModel(file))
-            }
-        }
-        scope.launch {
-            fileModelsList.forEach { file ->
-                if (!file.isDirectory) {
-                    fileListDao.insertFile(mapper.mapFileModelToFileDbModel(file))
+                if (file.isDirectory) {
+                    fileModelsList.add(
+                        mapper.mapFileToFileModel(
+                            file,
+                            calculateDirectorySize(file)
+                        )
+                    )
+                } else {
+                    fileModelsList.add(mapper.mapFileToFileModel(file))
                 }
             }
         }
-
         return fileModelsList.sortedBy { it.name }
     }
 
@@ -55,8 +61,20 @@ class RepositoryImpl @Inject constructor(
         val fullFileList = listFilesWithSubFolders(file)
         fullFileList.forEach { file ->
             val fileModel = mapper.mapFileToFileModel(file)
-            fileListDao.insertFile(mapper.mapFileModelToFileDbModel(fileModel))
+            fileListDao.insertFile(
+                mapper.mapFileModelToFileDbModel(
+                    fileModel,
+                    calculateHashCode(file)
+                )
+            )
         }
+    }
+
+    private fun calculateHashCode(file: File): String {
+        return HashUtils.getCheckSumFromFile(
+            MessageDigest.getInstance(SHA_256),
+            file
+        )
     }
 
     private fun listFilesWithSubFolders(file: File): List<File> {
@@ -71,5 +89,23 @@ class RepositoryImpl @Inject constructor(
             }
         }
         return files
+    }
+
+    private fun calculateDirectorySize(file: File): Long {
+        var size = 0L
+        file.listFiles()?.let {
+            for (file in file.listFiles()) {
+                if (file.isDirectory) {
+                    size += calculateDirectorySize(file)
+                } else {
+                    size += file.length()
+                }
+            }
+        }
+        return size
+    }
+
+    private companion object {
+        private const val SHA_256 = "SHA-256"
     }
 }

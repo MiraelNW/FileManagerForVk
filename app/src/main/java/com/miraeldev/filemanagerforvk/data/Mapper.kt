@@ -9,21 +9,34 @@ import java.nio.file.attribute.BasicFileAttributes
 import javax.inject.Inject
 
 class Mapper @Inject constructor() {
-    fun mapFileToFileModel(file: File): FileModel {
+    fun mapFileToFileModel(file: File, fileSize: Long = file.length()): FileModel {
         return FileModel(
             absolutePath = file.absolutePath,
             name = file.name,
-            size = file.length() / 1000,
+            size = fileSize,
+            formatSize = formatSize(fileSize),
             dateInMillis = file.getLastModifiedTimeInMillis(),
             isDirectory = file.isDirectory,
             type = if (!file.isDirectory) getType(file.absolutePath) else "directory",
-            hashcode = file.hashCode()
+            hashcode = file.hashCode().toString()
         )
     }
 
-    fun mapFileModelToFileDbModel(file: FileModel): FileDbModel {
+    fun mapFileToFileDbModel(file: File, fileSize: Long = file.length()): FileDbModel {
         return FileDbModel(
-            hashcode = file.hashcode,
+            absolutePath = file.absolutePath,
+            name = file.name,
+            size = fileSize,
+            dateInMillis = file.getLastModifiedTimeInMillis(),
+            isDirectory = file.isDirectory,
+            type = if (!file.isDirectory) getType(file.absolutePath) else "directory",
+            hashcode = file.hashCode().toString()
+        )
+    }
+
+    fun mapFileModelToFileDbModel(file: FileModel, fileHashCode: String): FileDbModel {
+        return FileDbModel(
+            hashcode = fileHashCode,
             isDirectory = file.isDirectory,
             dateInMillis = file.dateInMillis,
             absolutePath = file.absolutePath,
@@ -41,6 +54,7 @@ class Mapper @Inject constructor() {
             name = file.name,
             type = file.type,
             size = file.size,
+            formatSize = formatSize(file.size),
             absolutePath = file.absolutePath
         )
     }
@@ -77,5 +91,25 @@ class Mapper @Inject constructor() {
             this.lastModified()
         }
     }
+
+    private fun formatSize(size: Long): String {
+        return buildString {
+            append("File size: ")
+            if (size < 999) {
+                append(size)
+                append(" Bytes")
+            } else if (size < 999_999) {
+                append(size / 1_000)
+                append(" Kb")
+            } else if (size < 999_999_999) {
+                append(size / 1_000_000)
+                append(" Mb")
+            } else {
+                append(size / 1_000_000_000)
+                append(" Gb")
+            }
+        }
+    }
+
 
 }

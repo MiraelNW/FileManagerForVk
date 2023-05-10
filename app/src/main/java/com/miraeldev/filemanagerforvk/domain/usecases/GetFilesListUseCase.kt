@@ -4,5 +4,5 @@ import com.miraeldev.filemanagerforvk.domain.Repository
 import javax.inject.Inject
 
 class GetFilesListUseCase @Inject constructor(private val repository: Repository) {
-    operator fun invoke(path: String) = repository.getFilesList(path)
+    suspend operator fun invoke(path: String) = repository.getFilesList(path)
 }
